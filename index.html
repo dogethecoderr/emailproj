@@ -1,0 +1,257 @@
+<!--
+Email Prioritization System (Frontend UI)
+
+Purpose:
+This interface allows users (e.g., school counselors) to:
+- paste raw student emails
+- submit them for AI processing
+- view prioritized emails sorted by urgency
+- see grouped categories with summaries
+- receive AI-generated reply suggestions
+- toggle dark mode for accessibility and comfort
+
+Works with a Flask + OpenAI backend.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Email Prioritization System</title>
+
+<style>
+/* ---------------- BASE STYLES ---------------- */
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f9;
+    margin: 0;
+    padding: 0;
+    color: #333;
+    transition: 0.3s;
+}
+
+/* Header styling with gradient background */
+header {
+    background: linear-gradient(135deg, #4a90e2, #6a5acd);
+    color: white;
+    padding: 25px;
+    text-align: center;
+}
+
+/* Main container for page content */
+.container {
+    width: 85%;
+    margin: auto;
+    padding: 20px;
+}
+
+/* Email input box */
+textarea {
+    width: 100%;
+    height: 200px;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+/* Primary action button */
+button {
+    background: #4a90e2;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    margin-top: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: 0.2s;
+}
+
+/* Hover effect for buttons */
+button:hover {
+    background: #357ABD;
+}
+
+/* Section spacing */
+.section {
+    margin-top: 30px;
+}
+
+/* Individual email card */
+.card {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin: 15px 0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+/* High priority email highlight */
+.priority-high {
+    border-left: 6px solid #e74c3c;
+}
+
+/* Category grouping box */
+.category-box {
+    background: #ffffff;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+}
+
+/* Section headers */
+h2 {
+    color: #2c3e50;
+}
+
+/* AI-generated reply box */
+.reply-box {
+    background: #eef6ff;
+    padding: 12px;
+    border-radius: 10px;
+    margin-top: 10px;
+    white-space: pre-wrap;
+}
+
+
+/* ---------------- DARK MODE ---------------- */
+
+body.dark-mode {
+    background: #121212;
+    color: #e0e0e0;
+}
+
+/* Dark header */
+body.dark-mode header {
+    background: linear-gradient(135deg, #1f1f1f, #333);
+}
+
+/* Dark cards and categories */
+body.dark-mode .card,
+body.dark-mode .category-box {
+    background: #1e1e1e;
+    color: #e0e0e0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+/* Dark textarea */
+body.dark-mode textarea {
+    background: #1e1e1e;
+    color: white;
+    border: 1px solid #444;
+}
+
+/* Dark reply box */
+body.dark-mode .reply-box {
+    background: #2a2a2a;
+    color: #ddd;
+}
+
+/* Dark mode button styling */
+body.dark-mode button {
+    background: #444;
+}
+
+body.dark-mode button:hover {
+    background: #666;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- ---------------- HEADER ---------------- -->
+<header>
+    <h1>Email Prioritization System</h1>
+    <p>AI-powered email sorting for counselors</p>
+
+    <!-- Dark mode toggle button -->
+    <button onclick="toggleDarkMode()">
+        Toggle Dark Mode 🌙
+    </button>
+</header>
+
+<div class="container">
+
+<!-- ---------------- INPUT FORM ---------------- -->
+<form method="POST">
+    <textarea name="emails" placeholder="Paste emails here using --- format"></textarea>
+    <button type="submit">Process Emails</button>
+</form>
+
+<!-- ---------------- RESULTS SECTION ---------------- -->
+{% if processed %}
+
+<!-- High priority emails section -->
+<div class="section">
+    <h2>🔴 High Priority Emails</h2>
+
+    {% for item in processed %}
+        {% if item.analysis.priority >= 4 %}
+        <div class="card priority-high">
+            <b>Subject:</b> {{ item.email.subject }}<br>
+            <b>Summary:</b> {{ item.analysis.summary }}<br>
+            <b>Priority:</b> {{ item.analysis.priority }}
+        </div>
+        {% endif %}
+    {% endfor %}
+</div>
+
+<!-- Grouped emails by category -->
+<div class="section">
+    <h2>📊 Grouped Emails</h2>
+
+    {% for category, items in groups.items() %}
+        <div class="category-box">
+
+            <h3>{{ category }} ({{ items|length }})</h3>
+
+            <!-- Show first 3 summaries -->
+            {% for item in items[:3] %}
+                <p>• {{ item.analysis.summary }}</p>
+            {% endfor %}
+
+            <!-- AI-generated reply -->
+            <div class="reply-box">
+                <b>💡 Suggested Reply:</b><br>
+                {{ replies[category] }}
+            </div>
+
+        </div>
+    {% endfor %}
+
+</div>
+
+{% endif %}
+
+</div>
+
+<script>
+
+/* ---------------- DARK MODE TOGGLE ---------------- */
+function toggleDarkMode() {
+    document.body.classList.toggle("dark-mode");
+
+    // Save user preference in browser storage
+    if (document.body.classList.contains("dark-mode")) {
+        localStorage.setItem("darkMode", "enabled");
+    } else {
+        localStorage.setItem("darkMode", "disabled");
+    }
+}
+
+/* ---------------- LOAD SAVED MODE ---------------- */
+window.onload = function() {
+    if (localStorage.getItem("darkMode") === "enabled") {
+        document.body.classList.add("dark-mode");
+    }
+};
+
+</script>
+
+</body>
+</html>
